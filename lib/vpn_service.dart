@@ -3,6 +3,7 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
 
 class VpnService extends ChangeNotifier {
   bool _isConnected = false;
@@ -56,17 +57,21 @@ class VpnService extends ChangeNotifier {
     try {
       final config = await _fetchConfig();
       
-      // Сохраняем конфиг во временный файл
-      final configDir = Directory.systemTemp;
-      final configFile = File('${configDir.path}/xray_config.json');
-      
-      // Преобразуем vless-ссылку в JSON-конфиг
+      // Копируем xray из assets в рабочую папку
+      final appDir = await getApplicationDocumentsDirectory();
+      final xrayPath = '${appDir.path}/xray';
+      if (!File(xrayPath).existsSync()) {
+        final assetXray = await File('assets/xray').readAsBytes();
+        await File(xrayPath).writeAsBytes(assetXray);
+        await File(xrayPath).setExecutable(true);
+      }
+
+      final configFile = File('${appDir.path}/config.json');
       final jsonConfig = _vlessToJson(config);
       await configFile.writeAsString(jsonEncode(jsonConfig));
 
-      // Запускаем xray (бинарник должен быть в assets/xray)
       _xrayProcess = await Process.start(
-        'assets/xray',
+        xrayPath,
         ['run', '-c', configFile.path],
       );
 
@@ -93,7 +98,6 @@ class VpnService extends ChangeNotifier {
     notifyListeners();
   }
 
-  // Простейший парсер vless-ссылки в JSON-конфиг Xray
   Map<String, dynamic> _vlessToJson(String link) {
     final uri = Uri.parse(link);
     final params = uri.queryParameters;

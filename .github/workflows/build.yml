@@ -19,14 +19,10 @@ jobs:
       - name: Download Xray binary
         run: |
           wget https://github.com/XTLS/Xray-core/releases/download/v1.8.16/Xray-linux-64.zip
-          unzip Xray-linux-64.zip
+          unzip -o Xray-linux-64.zip
           mkdir -p android/app/src/main/assets
           mv xray android/app/src/main/assets/
-      
-      - name: Recreate Android project with valid name
-        run: |
-          rm -rf android
-          flutter create --project-name ghostnet_vpn --platforms=android .
+          chmod +x android/app/src/main/assets/xray
       
       - name: Install dependencies
         run: flutter pub get
