@@ -13,13 +13,18 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
-          flutter-version: '3.22.0'
+          flutter-version: '3.19.6'  # более стабильная версия
           channel: 'stable'
       
       - name: Recreate Android project with valid name
         run: |
           rm -rf android
           flutter create --project-name ghostnet_vpn --platforms=android .
+      
+      - name: Fix Android SDK paths
+        run: |
+          echo "sdk.dir=/usr/local/lib/android/sdk" > android/local.properties
+          echo "flutter.sdk=${{ env.FLUTTER_HOME }}" >> android/local.properties
       
       - name: Install dependencies
         run: flutter pub get
