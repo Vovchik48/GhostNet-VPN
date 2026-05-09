@@ -1,4 +1,4 @@
-name: ghostnet_app
+name: ghostnet_vpn
 description: GhostNet VPN Client - обход блокировок и белых списков
 publish_to: 'none'
 version: 1.0.0+1
