@@ -1,10 +1,10 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter_v2ray/flutter_v2ray.dart';
-import 'api.dart';
+import 'package:http/http.dart' as http;
 
 class VpnService extends ChangeNotifier {
-  late FlutterV2ray _v2ray;
   bool _isConnected = false;
   bool _isLoading = false;
   String _currentServerName = 'Москва (основной)';
@@ -12,6 +12,7 @@ class VpnService extends ChangeNotifier {
   int _seconds = 0;
   bool _killSwitch = true;
   bool _splitTunnel = false;
+  Process? _xrayProcess;
 
   bool get isConnected => _isConnected;
   bool get isLoading => _isLoading;
@@ -25,30 +26,26 @@ class VpnService extends ChangeNotifier {
   bool get killSwitch => _killSwitch;
   bool get splitTunnel => _splitTunnel;
 
-  VpnService() {
-    _v2ray = FlutterV2ray(
-      onStatusChanged: (status) {
-        if (status == V2RayStatus.connected) {
-          _isConnected = true;
-          _seconds = 0;
-          _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-            _seconds++;
-            notifyListeners();
-          });
-        } else {
-          _isConnected = false;
-          _timer?.cancel();
-        }
-        _isLoading = false;
-        notifyListeners();
-      },
-    );
-  }
-
   @override
   void dispose() {
     _timer?.cancel();
+    _xrayProcess?.kill();
     super.dispose();
+  }
+
+  Future<String> _fetchConfig() async {
+    final response = await http
+        .get(Uri.parse('http://111.88.159.225:5000/sub'))
+        .timeout(const Duration(seconds: 15));
+    if (response.statusCode == 200) {
+      final lines = response.body.split('\n');
+      return lines.firstWhere(
+        (line) => line.startsWith('vless://'),
+        orElse: () => throw Exception('Конфиг не найден'),
+      );
+    } else {
+      throw Exception('Ошибка сервера: ${response.statusCode}');
+    }
   }
 
   Future<void> connect() async {
@@ -57,21 +54,89 @@ class VpnService extends ChangeNotifier {
     notifyListeners();
 
     try {
-      String config = await ApiService().fetchConfig();
-      await _v2ray.startV2ray(config: config);
+      final config = await _fetchConfig();
+      
+      // Сохраняем конфиг во временный файл
+      final configDir = Directory.systemTemp;
+      final configFile = File('${configDir.path}/xray_config.json');
+      
+      // Преобразуем vless-ссылку в JSON-конфиг
+      final jsonConfig = _vlessToJson(config);
+      await configFile.writeAsString(jsonEncode(jsonConfig));
+
+      // Запускаем xray (бинарник должен быть в assets/xray)
+      _xrayProcess = await Process.start(
+        'assets/xray',
+        ['run', '-c', configFile.path],
+      );
+
+      _isConnected = true;
+      _seconds = 0;
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        _seconds++;
+        notifyListeners();
+      });
     } catch (e) {
+      debugPrint('VPN error: $e');
+    } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
   Future<void> disconnect() async {
-    await _v2ray.stopV2ray();
+    _xrayProcess?.kill();
+    _xrayProcess = null;
     _isConnected = false;
     _timer?.cancel();
     _seconds = 0;
-    _isLoading = false;
     notifyListeners();
+  }
+
+  // Простейший парсер vless-ссылки в JSON-конфиг Xray
+  Map<String, dynamic> _vlessToJson(String link) {
+    final uri = Uri.parse(link);
+    final params = uri.queryParameters;
+    
+    return {
+      "inbounds": [
+        {
+          "port": 10808,
+          "listen": "127.0.0.1",
+          "protocol": "socks",
+          "settings": {"udp": true}
+        }
+      ],
+      "outbounds": [
+        {
+          "protocol": "vless",
+          "settings": {
+            "vnext": [
+              {
+                "address": uri.host,
+                "port": uri.port,
+                "users": [
+                  {
+                    "id": uri.pathSegments.isNotEmpty ? uri.pathSegments[0] : '',
+                    "flow": params['flow'] ?? ''
+                  }
+                ]
+              }
+            ]
+          },
+          "streamSettings": {
+            "network": params['type'] ?? 'tcp',
+            "security": params['security'] ?? 'none',
+            "realitySettings": {
+              "serverName": params['sni'] ?? '',
+              "publicKey": params['pbk'] ?? '',
+              "shortId": params['sid'] ?? '',
+              "fingerprint": params['fp'] ?? 'chrome'
+            }
+          }
+        }
+      ]
+    };
   }
 
   void setServer(String name, String config) {
