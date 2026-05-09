@@ -487,4 +487,185 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
   }
 }
 
-// ... (остальные классы CustomPainter из вашего сообщения: AnimatedWorldMap, WorldMapPainter, ConnectedRingPainter, IdleRingPainter) ...
+// --------------- Animated World Map ---------------
+class AnimatedWorldMap extends StatelessWidget {
+  final AnimationController controller;
+  const AnimatedWorldMap({super.key, required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        return CustomPaint(
+          size: Size.infinite,
+          painter: WorldMapPainter(offset: controller.value),
+        );
+      },
+    );
+  }
+}
+
+class WorldMapPainter extends CustomPainter {
+  final double offset;
+  WorldMapPainter({required this.offset});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = Colors.white.withOpacity(0.06)
+      ..strokeWidth = 1.0
+      ..style = PaintingStyle.stroke;
+
+    const lineSpacing = 12.0;
+    const dotSpacing = 6.0;
+    final offsetY = offset * lineSpacing;
+
+    for (var y = 0.0; y < size.height; y += lineSpacing) {
+      final adjustedY = (y + offsetY) % size.height;
+      var x = 0.0;
+      while (x < size.width) {
+        final segmentLength = _getSegmentLength(x, adjustedY, size);
+        if (segmentLength > 0) {
+          canvas.drawLine(
+            Offset(x, adjustedY),
+            Offset(x + segmentLength, adjustedY),
+            paint,
+          );
+        }
+        x += segmentLength + dotSpacing;
+      }
+    }
+
+    final ringPaint = Paint()
+      ..color = Colors.white.withOpacity(0.04)
+      ..strokeWidth = 0.5
+      ..style = PaintingStyle.stroke;
+
+    final centerX = size.width / 2;
+    final centerY = size.height * 0.4;
+
+    for (var r = 80.0; r < math.max(size.width, size.height); r += 80.0) {
+      canvas.drawCircle(Offset(centerX, centerY), r, ringPaint);
+    }
+  }
+
+  double _getSegmentLength(double x, double y, Size size) {
+    final noise = _pseudoRandom(x * 0.01, y * 0.01);
+    final continentShape = _continentShape(x, y, size);
+    if (continentShape > 0.3) {
+      return 4.0 + noise * 8.0;
+    }
+    return 0.0;
+  }
+
+  double _pseudoRandom(double x, double y) {
+    final n = math.sin(x * 12.9898 + y * 78.233) * 43758.5453;
+    return n - n.floor();
+  }
+
+  double _continentShape(double x, double y, Size size) {
+    final nx = x / size.width;
+    final ny = y / size.height;
+    var v = 0.0;
+    v += _ellipse(nx, ny, 0.55, 0.35, 0.25, 0.15);
+    v += _ellipse(nx, ny, 0.52, 0.55, 0.08, 0.15);
+    v += _ellipse(nx, ny, 0.22, 0.3, 0.12, 0.12);
+    v += _ellipse(nx, ny, 0.28, 0.6, 0.06, 0.12);
+    v += _ellipse(nx, ny, 0.8, 0.65, 0.06, 0.04);
+    return v.clamp(0.0, 1.0);
+  }
+
+  double _ellipse(double nx, double ny, double cx, double cy, double rx, double ry) {
+    final dx = (nx - cx) / rx;
+    final dy = (ny - cy) / ry;
+    final dist = dx * dx + dy * dy;
+    return dist < 1.0 ? 1.0 - dist : 0.0;
+  }
+
+  @override
+  bool shouldRepaint(covariant WorldMapPainter oldDelegate) => true;
+}
+
+// --------------- Ring Painters ---------------
+class ConnectedRingPainter extends CustomPainter {
+  final double progress;
+  final Color color;
+  ConnectedRingPainter({required this.progress, required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 10;
+
+    final bgPaint = Paint()
+      ..color = color.withOpacity(0.05)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke;
+    canvas.drawCircle(center, radius, bgPaint);
+
+    final pulsePaint = Paint()
+      ..color = color.withOpacity(0.15 * (1 - progress))
+      ..strokeWidth = 2
+      ..style = PaintingStyle.stroke;
+    canvas.drawCircle(center, radius * (0.8 + progress * 0.2), pulsePaint);
+
+    final arcPaint = Paint()
+      ..color = color
+      ..strokeWidth = 2.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final sweepAngle = progress * math.pi * 2;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      -math.pi / 2,
+      sweepAngle,
+      false,
+      arcPaint,
+    );
+
+    final dotX = center.dx + radius * math.cos(sweepAngle - math.pi / 2);
+    final dotY = center.dy + radius * math.sin(sweepAngle - math.pi / 2);
+    canvas.drawCircle(Offset(dotX, dotY), 4, Paint()..color = color..style = PaintingStyle.fill);
+  }
+
+  @override
+  bool shouldRepaint(covariant ConnectedRingPainter oldDelegate) => true;
+}
+
+class IdleRingPainter extends CustomPainter {
+  final double progress;
+  IdleRingPainter({required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2 - 10;
+
+    final bgPaint = Paint()
+      ..color = Colors.white.withOpacity(0.03)
+      ..strokeWidth = 1
+      ..style = PaintingStyle.stroke;
+    canvas.drawCircle(center, radius, bgPaint);
+
+    final arcPaint = Paint()
+      ..color = Colors.white.withOpacity(0.08)
+      ..strokeWidth = 1.5
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
+
+    final sweepAngle = math.pi * 0.3;
+    final startAngle = progress * math.pi * 2;
+    canvas.drawArc(
+      Rect.fromCircle(center: center, radius: radius),
+      startAngle,
+      sweepAngle,
+      false,
+      arcPaint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant IdleRingPainter oldDelegate) => true;
+}
