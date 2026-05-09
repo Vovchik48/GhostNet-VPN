@@ -16,31 +16,19 @@ jobs:
           flutter-version: '3.22.0'
           channel: 'stable'
       
-      - name: Prepare project directory
+      - name: Recreate Android project with valid name
         run: |
-          cd ..
-          mv GhostNet-VPN ghostnet_vpn
-          cd ghostnet_vpn
-          echo "PROJECT_DIR=$PWD" >> $GITHUB_ENV
-      
-      - name: Recreate Android project
-        run: |
-          cd ${{ env.PROJECT_DIR }}
           rm -rf android
           flutter create --project-name ghostnet_vpn --platforms=android .
       
       - name: Install dependencies
-        run: |
-          cd ${{ env.PROJECT_DIR }}
-          flutter pub get
+        run: flutter pub get
       
       - name: Build APK (release)
-        run: |
-          cd ${{ env.PROJECT_DIR }}
-          flutter build apk --release
+        run: flutter build apk --release
       
       - name: Upload APK artifact
         uses: actions/upload-artifact@v4
         with:
           name: ghostnet-release-apk
-          path: ghostnet_vpn/build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/app-release.apk
