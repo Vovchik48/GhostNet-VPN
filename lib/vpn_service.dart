@@ -4,7 +4,7 @@ import 'package:flutter_v2ray/flutter_v2ray.dart';
 import 'api.dart';
 
 class VpnService extends ChangeNotifier {
-  final FlutterV2ray _v2ray = FlutterV2ray();
+  late FlutterV2ray _v2ray;
   bool _isConnected = false;
   bool _isLoading = false;
   String _currentServerName = 'Москва (основной)';
@@ -25,6 +25,26 @@ class VpnService extends ChangeNotifier {
   bool get killSwitch => _killSwitch;
   bool get splitTunnel => _splitTunnel;
 
+  VpnService() {
+    _v2ray = FlutterV2ray(
+      onStatusChanged: (status) {
+        if (status == V2RayStatus.connected) {
+          _isConnected = true;
+          _seconds = 0;
+          _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+            _seconds++;
+            notifyListeners();
+          });
+        } else {
+          _isConnected = false;
+          _timer?.cancel();
+        }
+        _isLoading = false;
+        notifyListeners();
+      },
+    );
+  }
+
   @override
   void dispose() {
     _timer?.cancel();
@@ -38,23 +58,15 @@ class VpnService extends ChangeNotifier {
 
     try {
       String config = await ApiService().fetchConfig();
-      await _v2ray.start(config: config);
-      _isConnected = true;
-      _seconds = 0;
-      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-        _seconds++;
-        notifyListeners();
-      });
+      await _v2ray.startV2ray(config: config);
     } catch (e) {
-      debugPrint('VPN error: $e');
-    } finally {
       _isLoading = false;
       notifyListeners();
     }
   }
 
   Future<void> disconnect() async {
-    await _v2ray.stop();
+    await _v2ray.stopV2ray();
     _isConnected = false;
     _timer?.cancel();
     _seconds = 0;
