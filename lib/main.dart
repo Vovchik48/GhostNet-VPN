@@ -134,11 +134,17 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               ),
             ),
             GestureDetector(
-              onTap: () {
-                if (vpn.isConnected) {
-                  vpn.disconnect();
-                } else {
-                  vpn.connect();
+              onTap: () async {
+                try {
+                  if (vpn.isConnected) {
+                    await vpn.disconnect();
+                  } else {
+                    await vpn.connect();
+                  }
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Ошибка подключения: $e')),
+                  );
                 }
               },
               child: Container(

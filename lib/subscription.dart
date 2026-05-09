@@ -14,8 +14,10 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
 
   Future<void> buy() async {
     setState(() => _isLoading = true);
-    Navigator.push(context, MaterialPageRoute(builder: (_) => PaymentWebView(plan: selectedPlan)));
-    setState(() => _isLoading = false);
+    final result = await Navigator.push(context, MaterialPageRoute(builder: (_) => PaymentWebView(plan: selectedPlan)));
+    if (mounted) {
+      setState(() => _isLoading = false);
+    }
   }
 
   @override

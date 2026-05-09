@@ -31,6 +31,7 @@ class VpnService extends ChangeNotifier {
   }
 
   Future<void> connect() async {
+    _timer?.cancel();
     if (_config.isEmpty) {
       _config = await ApiService().fetchConfig();
     }
@@ -56,7 +57,7 @@ class VpnService extends ChangeNotifier {
     } catch (e) {
       _isConnected = false;
       notifyListeners();
-      rethrow;
+      debugPrint('VPN connection error: $e');
     }
   }
 

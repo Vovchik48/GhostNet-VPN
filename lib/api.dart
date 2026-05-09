@@ -2,7 +2,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  // Замените на ваш реальный адрес подписки
   final String _subscriptionUrl = 'https://111.88.159.225:5000/sub?token=ваш_токен';
 
   Future<String> fetchConfig() async {

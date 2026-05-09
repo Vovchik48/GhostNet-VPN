@@ -6,10 +6,6 @@
     <application
         android:label="GhostNet VPN"
         android:icon="@mipmap/ic_launcher">
-        <service
-            android:name="com.example.flutter_v2ray.V2RayService"
-            android:foregroundServiceType="specialUse"
-            android:exported="false"/>
         <activity
             android:name=".MainActivity"
             android:exported="true"
