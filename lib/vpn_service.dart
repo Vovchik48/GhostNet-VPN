@@ -3,7 +3,6 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
 
 class VpnService extends ChangeNotifier {
   bool _isConnected = false;
@@ -57,13 +56,29 @@ class VpnService extends ChangeNotifier {
     try {
       final config = await _fetchConfig();
       
-      // Копируем xray из assets в рабочую папку
-      final appDir = await getApplicationDocumentsDirectory();
+      // Копируем xray из assets/flutter_assets/assets/xray в доступную папку
+      final appDir = Directory.systemTemp;
       final xrayPath = '${appDir.path}/xray';
       if (!File(xrayPath).existsSync()) {
-        final assetXray = await File('assets/xray').readAsBytes();
-        await File(xrayPath).writeAsBytes(assetXray);
-        await File(xrayPath).setExecutable(true);
+        // Пытаемся найти бинарник в assets (путь зависит от Flutter)
+        final possiblePaths = [
+          'assets/xray',
+          'flutter_assets/assets/xray',
+        ];
+        File? sourceFile;
+        for (final path in possiblePaths) {
+          final f = File(path);
+          if (f.existsSync()) {
+            sourceFile = f;
+            break;
+          }
+        }
+        if (sourceFile != null) {
+          await sourceFile.copy(xrayPath);
+          await File(xrayPath).setExecutable(true);
+        } else {
+          throw Exception('Xray binary not found in assets');
+        }
       }
 
       final configFile = File('${appDir.path}/config.json');

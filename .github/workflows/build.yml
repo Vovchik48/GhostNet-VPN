@@ -20,9 +20,14 @@ jobs:
         run: |
           wget https://github.com/XTLS/Xray-core/releases/download/v1.8.16/Xray-linux-64.zip
           unzip -o Xray-linux-64.zip
-          mkdir -p android/app/src/main/assets
-          mv xray android/app/src/main/assets/
-          chmod +x android/app/src/main/assets/xray
+          mkdir -p assets
+          mv xray assets/
+          chmod +x assets/xray
+      
+      - name: Remove old Android folder and recreate
+        run: |
+          rm -rf android
+          flutter create --project-name ghostnet_vpn --platforms=android .
       
       - name: Install dependencies
         run: flutter pub get
