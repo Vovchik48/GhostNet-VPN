@@ -6,7 +6,7 @@ class ServerListScreen extends StatelessWidget {
   const ServerListScreen({super.key});
 
   final List<Map<String, String>> servers = const [
-    {'name': '🇷🇺 Москва (основной)', 'config': 'vless://ВАШ_UUID@111.88.159.225:443?type=tcp&security=reality&flow=xtls-rprx-vision&pbk=ВАШ_PUBKEY&sid=ВАШ_SID&sni=ya.ru&fp=chrome#GhostNet'},
+    {'name': '🇷🇺 Москва (основной)', 'config': 'vless://ВАШ_UUID@111.88.159.225:443?...'},
     {'name': '🇷🇺 Москва (DNS)', 'config': 'vless://...замените на свой конфиг...'},
     {'name': '🇷🇺 Санкт-Петербург', 'config': 'vless://...замените на свой конфиг...'},
     {'name': '🇫🇮 Финляндия (WiFi)', 'config': 'vless://...замените на свой конфиг...'},
@@ -27,10 +27,12 @@ class ServerListScreen extends StatelessWidget {
             subtitle: configValid ? null : const Text('Конфиг не задан', style: TextStyle(color: Colors.redAccent)),
             trailing: vpn.currentServerName == server['name'] ? const Icon(Icons.check, color: Colors.green) : null,
             enabled: configValid,
-            onTap: configValid ? () {
-              vpn.setServer(server['name']!, server['config']!);
-              Navigator.pop(context);
-            } : null,
+            onTap: configValid
+                ? () {
+                    vpn.setServer(server['name']!, server['config']!);
+                    Navigator.pop(context);
+                  }
+                : null,
           );
         },
       ),

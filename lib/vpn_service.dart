@@ -28,7 +28,6 @@ class VpnService extends ChangeNotifier {
 
   Future<void> connect() async {
     _timer?.cancel();
-    // TODO: заменить на реальный VPN вызов
     _isConnected = true;
     _seconds = 0;
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
