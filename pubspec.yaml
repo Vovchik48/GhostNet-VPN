@@ -1,0 +1,27 @@
+name: ghostnet_app
+description: GhostNet VPN Client - обход блокировок и белых списков
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.2.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_v2ray: ^0.4.6
+  http: ^1.1.0
+  shared_preferences: ^2.2.2
+  provider: ^6.1.1
+  animated_toggle_switch: ^0.8.0
+  google_fonts: ^6.1.0
+  flutter_animate: ^4.3.0
+  webview_flutter: ^4.4.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
