@@ -2,7 +2,8 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 class ApiService {
-  final String _subscriptionUrl = 'https://111.88.159.225:5000/sub?token=ваш_токен';
+  // Замените на реальный URL вашего сервера подписки
+  final String _subscriptionUrl = 'http://111.88.159.225:5000/sub';
 
   Future<String> fetchConfig() async {
     final response = await http
@@ -12,10 +13,10 @@ class ApiService {
       final lines = response.body.split('\n');
       return lines.firstWhere(
         (line) => line.startsWith('vless://'),
-        orElse: () => throw Exception('VLESS-конфигурация не найдена в ответе сервера'),
+        orElse: () => throw Exception('Конфиг не найден'),
       );
     } else {
-      throw Exception('Не удалось загрузить конфиг (код ${response.statusCode})');
+      throw Exception('Ошибка сервера: ${response.statusCode}');
     }
   }
 }

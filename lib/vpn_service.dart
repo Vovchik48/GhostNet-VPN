@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_v2ray/flutter_v2ray.dart';
+import 'api.dart';
 
 class VpnService extends ChangeNotifier {
+  final FlutterV2ray _v2ray = FlutterV2ray();
   bool _isConnected = false;
   bool _isLoading = false;
   String _currentServerName = 'Москва (основной)';
@@ -33,21 +36,25 @@ class VpnService extends ChangeNotifier {
     _isLoading = true;
     notifyListeners();
 
-    // Имитация подключения (в будущем замените на реальный VPN-клиент)
-    await Future.delayed(const Duration(seconds: 2));
-
-    _timer?.cancel();
-    _isConnected = true;
-    _seconds = 0;
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      _seconds++;
+    try {
+      String config = await ApiService().fetchConfig();
+      await _v2ray.start(config: config);
+      _isConnected = true;
+      _seconds = 0;
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        _seconds++;
+        notifyListeners();
+      });
+    } catch (e) {
+      debugPrint('VPN error: $e');
+    } finally {
+      _isLoading = false;
       notifyListeners();
-    });
-    _isLoading = false;
-    notifyListeners();
+    }
   }
 
   Future<void> disconnect() async {
+    await _v2ray.stop();
     _isConnected = false;
     _timer?.cancel();
     _seconds = 0;
