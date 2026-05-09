@@ -56,11 +56,10 @@ class VpnService extends ChangeNotifier {
     try {
       final config = await _fetchConfig();
       
-      // Копируем xray из assets/flutter_assets/assets/xray в доступную папку
+      // Копируем xray из assets в рабочую папку
       final appDir = Directory.systemTemp;
       final xrayPath = '${appDir.path}/xray';
       if (!File(xrayPath).existsSync()) {
-        // Пытаемся найти бинарник в assets (путь зависит от Flutter)
         final possiblePaths = [
           'assets/xray',
           'flutter_assets/assets/xray',
@@ -75,7 +74,8 @@ class VpnService extends ChangeNotifier {
         }
         if (sourceFile != null) {
           await sourceFile.copy(xrayPath);
-          await File(xrayPath).setExecutable(true);
+          // Вместо setExecutable используем chmod
+          await Process.run('chmod', ['+x', xrayPath]);
         } else {
           throw Exception('Xray binary not found in assets');
         }
