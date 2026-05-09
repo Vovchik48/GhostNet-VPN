@@ -36,24 +36,14 @@ class VpnService extends ChangeNotifier {
       _config = await ApiService().fetchConfig();
     }
     try {
-      await _v2ray.start(
-        config: _config,
-        onStatusChanged: (status) {
-          if (status == V2RayStatus.connected) {
-            _isConnected = true;
-            _seconds = 0;
-            _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-              _seconds++;
-              notifyListeners();
-            });
-            notifyListeners();
-          } else {
-            _isConnected = false;
-            _timer?.cancel();
-            notifyListeners();
-          }
-        },
-      );
+      await _v2ray.start(config: _config);
+      _isConnected = true;
+      _seconds = 0;
+      _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+        _seconds++;
+        notifyListeners();
+      });
+      notifyListeners();
     } catch (e) {
       _isConnected = false;
       notifyListeners();
