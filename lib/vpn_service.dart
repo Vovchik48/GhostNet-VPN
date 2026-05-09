@@ -24,6 +24,12 @@ class VpnService extends ChangeNotifier {
   bool get killSwitch => _killSwitch;
   bool get splitTunnel => _splitTunnel;
 
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
   Future<void> connect() async {
     if (_config.isEmpty) {
       _config = await ApiService().fetchConfig();
@@ -50,6 +56,7 @@ class VpnService extends ChangeNotifier {
     } catch (e) {
       _isConnected = false;
       notifyListeners();
+      rethrow;
     }
   }
 
@@ -62,6 +69,9 @@ class VpnService extends ChangeNotifier {
   }
 
   void setServer(String name, String config) {
+    if (!config.startsWith('vless://')) {
+      throw ArgumentError('Невалидный VLESS-конфиг');
+    }
     _currentServerName = name;
     _config = config;
     if (_isConnected) {

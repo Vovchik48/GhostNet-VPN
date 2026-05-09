@@ -13,10 +13,8 @@ dependencies:
   http: ^1.1.0
   shared_preferences: ^2.2.2
   provider: ^6.1.1
-  animated_toggle_switch: ^0.8.0
   google_fonts: ^6.1.0
-  flutter_animate: ^4.3.0
-  webview_flutter: ^4.4.1
+  webview_flutter: ^4.4.0
 
 dev_dependencies:
   flutter_test:

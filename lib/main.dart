@@ -93,8 +93,8 @@ class _HomeScreenState extends State<HomeScreen> with TickerProviderStateMixin {
               padding: const EdgeInsets.symmetric(vertical: 30),
               child: Column(
                 children: [
-                  AnimatedBuilder(
-                    animation: _pulseController,
+                  ListenableBuilder(
+                    listenable: _pulseController,
                     builder: (context, child) {
                       return Transform.scale(
                         scale: vpn.isConnected ? 1.0 + _pulseController.value * 0.05 : 1.0,

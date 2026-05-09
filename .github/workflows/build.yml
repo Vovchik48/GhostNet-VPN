@@ -14,8 +14,6 @@ jobs:
         with:
           flutter-version: '3.22.0'
           channel: 'stable'
-      - name: Update Android Gradle
-        run: flutter create --project-name ghostnet_vpn --platforms=android .
       - name: Install dependencies
         run: flutter pub get
       - name: Build APK (debug)

@@ -21,13 +21,16 @@ class ServerListScreen extends StatelessWidget {
         itemCount: servers.length,
         itemBuilder: (context, index) {
           final server = servers[index];
+          final configValid = server['config']?.startsWith('vless://') ?? false;
           return ListTile(
             title: Text(server['name']!),
+            subtitle: configValid ? null : const Text('Конфиг не задан', style: TextStyle(color: Colors.redAccent)),
             trailing: vpn.currentServerName == server['name'] ? const Icon(Icons.check, color: Colors.green) : null,
-            onTap: () {
+            enabled: configValid,
+            onTap: configValid ? () {
               vpn.setServer(server['name']!, server['config']!);
               Navigator.pop(context);
-            },
+            } : null,
           );
         },
       ),
