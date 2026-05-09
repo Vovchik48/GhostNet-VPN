@@ -9,7 +9,6 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  flutter_v2ray: ^0.4.6
   http: ^1.1.0
   shared_preferences: ^2.2.2
   provider: ^6.1.1
