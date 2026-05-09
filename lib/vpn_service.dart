@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 class VpnService extends ChangeNotifier {
   bool _isConnected = false;
+  bool _isLoading = false;
   String _currentServerName = 'Москва (основной)';
   Timer? _timer;
   int _seconds = 0;
@@ -10,6 +11,7 @@ class VpnService extends ChangeNotifier {
   bool _splitTunnel = false;
 
   bool get isConnected => _isConnected;
+  bool get isLoading => _isLoading;
   String get currentServerName => _currentServerName;
   String get connectedTime {
     int h = _seconds ~/ 3600;
@@ -27,6 +29,13 @@ class VpnService extends ChangeNotifier {
   }
 
   Future<void> connect() async {
+    if (_isLoading) return;
+    _isLoading = true;
+    notifyListeners();
+
+    // Имитация подключения (в будущем замените на реальный VPN-клиент)
+    await Future.delayed(const Duration(seconds: 2));
+
     _timer?.cancel();
     _isConnected = true;
     _seconds = 0;
@@ -34,6 +43,7 @@ class VpnService extends ChangeNotifier {
       _seconds++;
       notifyListeners();
     });
+    _isLoading = false;
     notifyListeners();
   }
 
@@ -41,6 +51,7 @@ class VpnService extends ChangeNotifier {
     _isConnected = false;
     _timer?.cancel();
     _seconds = 0;
+    _isLoading = false;
     notifyListeners();
   }
 
